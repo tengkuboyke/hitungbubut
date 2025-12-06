@@ -7,7 +7,7 @@ from PIL import Image
 import json
 
 # --- 1. SETTING HALAMAN ---
-st.set_page_config(page_title="Estimator Pro V2", layout="wide", page_icon="📸")
+st.set_page_config(page_title="Estimator Pro V2.1", layout="wide", page_icon="📸")
 
 st.markdown("""
 <style>
@@ -38,7 +38,6 @@ df_mat, df_mac = get_data()
 # --- 3. SIDEBAR (WAJIB ISI API KEY) ---
 with st.sidebar:
     st.header("⚙️ Pengaturan")
-    # API KEY SAYA TARUH PALING ATAS BIAR KELIHATAN
     api_key = st.text_input("🔑 Google API Key", type="password", help="Wajib diisi agar AI jalan")
     if not api_key:
         st.warning("⚠️ Masukkan API Key dulu!")
@@ -75,7 +74,6 @@ with col_kiri:
     # LOGIKA SCAN (MUNCUL KALAU ADA GAMBAR)
     if img_file:
         st.success("Gambar terdeteksi!")
-        # Tampilkan Tombol Scan HANYA jika API Key ada
         if api_key:
             if st.button("✨ KLIK UNTUK SCAN UKURAN (AI)", type="primary"):
                 try:
@@ -87,7 +85,6 @@ with col_kiri:
                         res = model.generate_content([prompt, img])
                         data = json.loads(res.text.replace("```json", "").replace("```", ""))
                         
-                        # Update Data
                         st.session_state['dim']['p'] = float(data.get('length', 100))
                         st.session_state['dim']['l'] = float(data.get('width', 50))
                         st.session_state['dim']['t'] = float(data.get('thickness', 20))
@@ -97,9 +94,9 @@ with col_kiri:
                 except Exception as e:
                     st.error(f"Gagal Scan: {e}")
         else:
-            st.error("🚫 Tombol Scan terkunci. Masukkan Google API Key di Sidebar sebelah kiri.")
+            st.error("🚫 Masukkan API Key di Sidebar kiri dulu.")
 
-    # INPUT MANUAL (HASIL SCAN MASUK SINI)
+    # INPUT MANUAL
     st.divider()
     mode = st.radio("Bentuk:", ["Kotak", "Silinder"], horizontal=True)
     if mode == "Kotak":
@@ -115,12 +112,15 @@ with col_kiri:
 with col_kanan:
     st.subheader("2. Hasil Estimasi")
     
-    # Hitung
+    # Hitung (BAGIAN INI YANG DIPERBAIKI)
     row_mat = df_mat[df_mat['Material'] == mat_pilih].iloc[0]
     row_mac = df_mac[df_mac['Mesin'] == mesin_pilih].iloc[0]
     
     berat = (vol * row_mat['Density']) / 1000
-    biaya = (berat * row_mat['Price']) + (jam * row_mac['Rate'] * row_mac['Hardness']) + row_mac['Setup']
+    
+    # PERBAIKAN RUMUS: row_mat['Hardness'] (bukan row_mac)
+    biaya = (berat * row_mat['Price']) + (jam * row_mac['Rate'] * row_mat['Hardness']) + row_mac['Setup']
+    
     harga = biaya + (biaya * margin/100)
     
     # Visualisasi
