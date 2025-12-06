@@ -1,3 +1,6 @@
 streamlit
 plotly
 numpy
+pandas
+google-generativeai
+Pillow
